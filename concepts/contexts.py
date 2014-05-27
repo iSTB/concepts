@@ -109,26 +109,69 @@ class Context(object):
         objects, properties, bools = frmat.load(filename, encoding, **kwargs)
         return cls(objects, properties, bools)
 
-    def __init__(self, objects, properties, bools):
+    def __init__(self, objects=[], properties=[], bools=[[]]):
         """Create context from objects, properties, and correspondence."""
         objects = tuple(objects)
         properties = tuple(properties)
 
-        if len(set(objects)) != len(objects):
-            raise ValueError('%r duplicate objects: %r' % (
-                self.__class__, objects))
-        if len(set(properties)) != len(properties):
-            raise ValueError('%r duplicate properties: %r' % (
-                self.__class__, properties))
-        if not set(objects).isdisjoint(properties):
-            raise ValueError('%r objects and properties overlap: %r' % (
-                self.__class__, set(objects) & set(properties)))
-        if (len(bools) != len(objects)
-            or {len(b) for b in bools} != {len(properties)}):
-            raise ValueError('%r bools is not %d items of length %d' % (
-                self.__class__, len(objects), len(properties)))
 
-        self._intents, self._extents = matrices.Relation('Intent', 'Extent',
+	if objects:
+
+            if len(set(objects)) != len(objects):
+                raise ValueError('%r duplicate objects: %r' % (
+                    self.__class__, objects))
+            if len(set(properties)) != len(properties):
+                raise ValueError('%r duplicate properties: %r' % (
+                    self.__class__, properties))
+            if not set(objects).isdisjoint(properties):
+                raise ValueError('%r objects and properties overlap: %r' % (
+                    self.__class__, set(objects) & set(properties)))
+            if (len(bools) != len(objects)
+                or {len(b) for b in bools} != {len(properties)}):
+                raise ValueError('%r bools is not %d items of length %d' % (
+                    self.__class__, len(objects), len(properties)))
+
+            self._makecontext(objects,properties,bools)
+
+	    self.currentobjs = objects
+	    self.currentprops = properties
+	    self.currentbools = bools
+
+	else:
+	    self.currentobjs,  self.currentprops, self.currentbools = (), (), []
+
+
+    def additem(self,obj,props):
+	"""Adds the item (obj,props) to the context on the fly.
+	Example use: c.additem('cat', ['has tail', 'has fur', 'likes fish'])
+	"""
+	if obj in self.currentobjs:
+		raise ValueError('Object %r is already defined in the context' % obj)
+
+
+	n_old = len(self.currentprops)
+	
+	self.currentprops = tuple(set(self.currentprops + tuple(props)))
+	self.currentobjs += tuple([obj])	
+	
+	n_new = len(self.currentprops)	
+ 			
+	itembools = [True if prop in props else False for prop in self.currentprops]
+		
+	self.currentbools = [old + tuple([False]*(n_old-n_new)) for old in self.currentbools] 
+
+	self.currentbools.append(itembools)	
+
+	self._makecontext(self.currentobjs, self.currentprops, self.currentbools)
+
+
+    def _makecontext(self,objects,properties,bools):
+        """Makes the relation matrix"""
+
+	print objects
+	print properties
+	print bools
+	self._intents, self._extents = matrices.Relation('Intent', 'Extent',
             properties, objects, bools)
 
         self._Intent = self._intents.BitSet
