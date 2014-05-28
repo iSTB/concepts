@@ -114,6 +114,7 @@ class Context(object):
         objects = tuple(objects)
         properties = tuple(properties)
 
+<<<<<<< HEAD
 
 	if objects:
 
@@ -172,6 +173,27 @@ class Context(object):
 	print properties
 	print bools
 	self._intents, self._extents = matrices.Relation('Intent', 'Extent',
+=======
+        if len(set(objects)) != len(objects):
+            raise ValueError('%r duplicate objects: %r' % (
+                self.__class__, objects))
+        if len(set(properties)) != len(properties):
+            raise ValueError('%r duplicate properties: %r' % (
+                self.__class__, properties))
+        if not set(objects).isdisjoint(properties):
+            raise ValueError('%r objects and properties overlap: %r' % (
+                self.__class__, set(objects) & set(properties)))
+        if not objects:
+            raise ValueError('%r empty objects: %r' % (self.__class__, objects))
+        if not properties:
+            raise ValueError('%r empty properties: %r' % (self.__class__, properties))
+        if (len(bools) != len(objects)
+            or {len(b) for b in bools} != {len(properties)}):
+            raise ValueError('%r bools is not %d items of length %d' % (
+                self.__class__, len(objects), len(properties)))
+
+        self._intents, self._extents = matrices.Relation('Intent', 'Extent',
+>>>>>>> upstream/master
             properties, objects, bools)
 
         self._Intent = self._intents.BitSet
@@ -225,19 +247,17 @@ class Context(object):
                 yield extent, intent
 
     def _lattice(self, infimum=()):
-        """Return list of (extent, indent, upper, lower) in short lexicographic order.
+        """Yield (extent, indent, upper, lower) in short lexicographic order.
 
         cf. C. Lindig. 2000. Fast Concept Analysis.
         """
         extent, intent = self._Extent.frommembers(infimum).doubleprime()
         concept = (extent, intent, [], [])
-        result = []
         heap = [(extent.shortlex(), concept)]
         mapping = {extent: concept}
         push, pop = heapq.heappush, heapq.heappop
         while heap:
             concept = pop(heap)[1]
-            result.append(concept)
             for extent, intent in self._neighbors(concept[0]):
                 if extent in mapping:
                     neighbor = mapping[extent]
@@ -246,7 +266,7 @@ class Context(object):
                     push(heap, (extent.shortlex(), neighbor))
                 concept[2].append(neighbor[0])
                 neighbor[3].append(concept[0])
-        return result
+            yield concept  # note lower is still appended to until exhaustion
 
     def intension(self, objects, raw=False):
         """Return all properties shared by the given objects."""
@@ -300,7 +320,7 @@ class Context(object):
         return frmat.dumps(self._Extent._members, self._Intent._members,
             self._intents.bools(), **kwargs)
 
-    def tofile(self, filename, frmat='cxt', encoding='utf8', **kwargs):
+    def tofile(self, filename, frmat='cxt', encoding='utf-8', **kwargs):
         """Save the context serialized to file in the given format."""
         frmat = formats.Format[frmat]
         return frmat.dump(filename, self._Extent._members, self._Intent._members,
