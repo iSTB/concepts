@@ -114,7 +114,6 @@ class Context(object):
         objects = tuple(objects)
         properties = tuple(properties)
 
-<<<<<<< HEAD
 
 	if objects:
 
@@ -169,11 +168,6 @@ class Context(object):
     def _makecontext(self,objects,properties,bools):
         """Makes the relation matrix"""
 
-	print objects
-	print properties
-	print bools
-	self._intents, self._extents = matrices.Relation('Intent', 'Extent',
-=======
         if len(set(objects)) != len(objects):
             raise ValueError('%r duplicate objects: %r' % (
                 self.__class__, objects))
@@ -192,9 +186,7 @@ class Context(object):
             raise ValueError('%r bools is not %d items of length %d' % (
                 self.__class__, len(objects), len(properties)))
 
-        self._intents, self._extents = matrices.Relation('Intent', 'Extent',
->>>>>>> upstream/master
-            properties, objects, bools)
+        self._intents, self._extents = matrices.Relation('Intent', 'Extent', properties, objects, bools)
 
         self._Intent = self._intents.BitSet
         self._Extent = self._extents.BitSet
